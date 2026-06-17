@@ -1,0 +1,25 @@
+==== launch 2026-06-14 17:41:11 host=nue2 nb=ベースライン実験３LGBM_seed固定_A_nue2.ipynb ====
+[NbConvertApp] Converting notebook ベースライン実験３LGBM_seed固定_A_nue2.ipynb to notebook
+/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbformat/__init__.py:93: MissingIDFieldWarning: Code cell is missing an id field, this will become a hard error in future nbformat versions. You may want to use `normalize()` on your notebooks before validations (available since nbformat 5.1.4). Previous versions of nbformat are fixing this issue transparently, and will stop doing so in the future.
+  validate(nb)
+0.01s - Debugger warning: It seems that frozen modules are being used, which may
+0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off
+0.00s - to python to disable frozen modules.
+0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.
+[IPKernelApp] WARNING | Parent appears to have exited, shutting down.
+==== launch 2026-06-14 18:28:25 host=nue2 nb=ベースライン実験３LGBM_seed固定_A_nue2.ipynb ====
+[NbConvertApp] Converting notebook ベースライン実験３LGBM_seed固定_A_nue2.ipynb to notebook
+/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbformat/__init__.py:93: MissingIDFieldWarning: Code cell is missing an id field, this will become a hard error in future nbformat versions. You may want to use `normalize()` on your notebooks before validations (available since nbformat 5.1.4). Previous versions of nbformat are fixing this issue transparently, and will stop doing so in the future.
+  validate(nb)
+0.00s - Debugger warning: It seems that frozen modules are being used, which may
+0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off
+0.00s - to python to disable frozen modules.
+0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.
+==== launch 2026-06-16 12:38:03 host=nue2 nb=ベースライン実験３LGBM_seed固定_A_nue2.ipynb ====
+[NbConvertApp] Converting notebook ベースライン実験３LGBM_seed固定_A_nue2.ipynb to notebook
+/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbformat/__init__.py:93: MissingIDFieldWarning: Code cell is missing an id field, this will become a hard error in future nbformat versions. You may want to use `normalize()` on your notebooks before validations (available since nbformat 5.1.4). Previous versions of nbformat are fixing this issue transparently, and will stop doing so in the future.
+  validate(nb)
+0.00s - Debugger warning: It seems that frozen modules are being used, which may
+0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off
+0.00s - to python to disable frozen modules.
+0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.

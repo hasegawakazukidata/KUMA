@@ -1,0 +1,1 @@
+,pref,n,epoch,learning_rate,weight_decay,batch_size,m1_size,m2_size,dropout,base_channels,train_y,train_acc,train_positive,train_meanscore,valid_y,valid_acc,valid_auc,CNN_valid_auc,valid_positive,valid_meanscore,test_y,test_acc,test_auc,CNN_test_auc,test_positive,test_meanscore

@@ -1,0 +1,29 @@
+# Conda 環境定義（実験3：全モデル全県実行環境）
+# 作成: conda env create -f environment.yaml
+# 有効化: conda activate kuma-exp3
+#
+# 動作確認環境: Python 3.11.7 / PyTorch 2.5.1 + CUDA 12.4 (GPU) / Linux
+# GPU を使わない場合は pytorch-cuda 行を削除し cpuonly を有効化してください。
+name: kuma-exp3
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - numpy=2.2
+  - pandas=3.0
+  - scikit-learn=1.7
+  - pytorch=2.5.1
+  - pytorch-cuda=12.4
+  - optuna=4.5
+  - lightgbm=4.6
+  - geopandas=1.1
+  - rasterio=1.4
+  - shapely=2.1
+  - affine=2.4
+  - tifffile=2023.4.12
+  - pillow=12.1
+  - joblib=1.5
+  - matplotlib=3.10

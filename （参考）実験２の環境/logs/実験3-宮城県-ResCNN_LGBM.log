@@ -1,0 +1,913 @@
+==== launch 2026-06-15 02:12:36 host=beaver CUDA_VISIBLE_DEVICES=5 nb=実験3-宮城県-ResCNN_LGBM.ipynb ====
+[NbConvertApp] Converting notebook 実験3-宮城県-ResCNN_LGBM.ipynb to notebook
+0.00s - Debugger warning: It seems that frozen modules are being used, which may
+0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off
+0.00s - to python to disable frozen modules.
+0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.
+[NbConvertApp] WARNING | Wait for final termination of kernel timed out - continuing...
+Traceback (most recent call last):
+  File "/home/hasegawakazuki/anaconda3/bin/jupyter-nbconvert", line 11, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/jupyter_core/application.py", line 280, in launch_instance
+    super().launch_instance(argv=argv, **kwargs)
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/traitlets/config/application.py", line 992, in launch_instance
+    app.start()
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbconvert/nbconvertapp.py", line 412, in start
+    self.convert_notebooks()
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbconvert/nbconvertapp.py", line 590, in convert_notebooks
+    self.convert_single_notebook(notebook_filename)
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbconvert/nbconvertapp.py", line 556, in convert_single_notebook
+    output, resources = self.export_single_notebook(
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbconvert/nbconvertapp.py", line 479, in export_single_notebook
+    output, resources = self.exporter.from_filename(
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbconvert/exporters/exporter.py", line 203, in from_filename
+    return self.from_file(f, resources=resources, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbconvert/exporters/exporter.py", line 222, in from_file
+    return self.from_notebook_node(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbconvert/exporters/notebook.py", line 36, in from_notebook_node
+    nb_copy, resources = super().from_notebook_node(nb, resources, **kw)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbconvert/exporters/exporter.py", line 156, in from_notebook_node
+    nb_copy, resources = self._preprocess(nb_copy, resources)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbconvert/exporters/exporter.py", line 354, in _preprocess
+    nbc, resc = preprocessor(nbc, resc)  # type:ignore[operator]
+                ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbconvert/preprocessors/base.py", line 48, in __call__
+    return self.preprocess(nb, resources)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbconvert/preprocessors/execute.py", line 102, in preprocess
+    self.preprocess_cell(cell, resources, index)
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbconvert/preprocessors/execute.py", line 123, in preprocess_cell
+    cell = self.execute_cell(cell, index, store_history=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/jupyter_core/utils/__init__.py", line 173, in wrapped
+    return loop.run_until_complete(inner)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/asyncio/base_events.py", line 653, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbclient/client.py", line 1058, in async_execute_cell
+    await self._check_raise_for_error(cell, cell_index, exec_reply)
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbclient/client.py", line 914, in _check_raise_for_error
+    raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
+nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
+------------------
+# 5. 空間的クロスバリデーションによる学習と評価 + Optuna
+Lcluster = []; LACC = []; Lauc = []
+try:
+    final_df = pd.read_csv("optuna_results/宮城県-Res18-LGBM-optina-植生あり.csv")
+except:
+    final_df = pd.DataFrame(columns=["pref", "n", "epoch","learning_rate","weight_decay","batch_size", "m1_size","m2_size", "dropout","base_channels",
+                    "train_y", "train_acc", "train_positive", "train_meanscore","valid_y","valid_acc","valid_auc","CNN_valid_auc", "valid_positive", "valid_meanscore",
+                    "test_y", "test_acc", "test_auc","CNN_test_auc","test_positive",  "test_meanscore"
+                ])
+    final_df.to_csv("optuna_results/宮城県-Res18-LGBM-optina-植生あり.csv")
+num_n = len(final_df)
+Nth = 1
+patience = 10 # アーリーストッピング用
+FOLDS = [("宮城県","山形県"),("山形県","岩手県"),("岩手県","福島県"),("福島県","秋田県"),("秋田県","宮城県")]
+for n, (TEST_GRP, VALID_GRP) in enumerate(FOLDS):
+
+    CSV_PATH = f"optuna_results/{TEST_GRP}-Res18-LGBM-optina-植生あり.csv"
+    if not os.path.exists(CSV_PATH):
+        pd.DataFrame(columns=final_df.columns).to_csv(CSV_PATH)
+    print(f"Training on fold {n}: test={TEST_GRP}, valid={VALID_GRP}")
+
+    num_epochs = 200
+    patience = 10 # アーリーストッピング用
+
+    WAIT_SECONDS = 1800          # 例：3分待つ
+    MAX_RETRIES_PER_TRIAL = 5   # 例：1 trial につき 3回までリトライ
+
+    # ---- 目的関数：このfoldのsplitを固定したまま、trialごとに学習 ----
+    _GLOBAL_BEST_AUC = [-1.0]
+    def objective(trial: optuna.Trial):
+        for attempt in range(1, MAX_RETRIES_PER_TRIAL + 1):
+            try:
+                print(f"[Trial {trial.number}] Attempt {attempt}/{MAX_RETRIES_PER_TRIAL}")
+
+                ########## データ分割: 実験3整合の持ち回り（test=TEST_GRP / valid=VALID_GRP / train=残り。割合は実験3の県別件数に一致）##########
+                SEED = 42
+                test_index  = list(dataset.index[dataset["fold_group"] == TEST_GRP])
+                valid_index = list(dataset.index[dataset["fold_group"] == VALID_GRP])
+                train_index = list(dataset.index[(dataset["fold_group"] != TEST_GRP) & (dataset["fold_group"] != VALID_GRP)])
+                random.seed(SEED)  # ダウンサンプリングを再現可能に
+                random.shuffle(test_index)
+                random.shuffle(valid_index)
+                random.shuffle(train_index)
+
+                # train の負例(kuma_view==0)を 1/10 にダウンサンプリング（正例は全て保持）
+                _labels = dataset["kuma_view"]
+                train_pos = [i for i in train_index if _labels[i] == 1]
+                train_neg = [i for i in train_index if _labels[i] == 0]
+                random.shuffle(train_neg)
+                train_neg = train_neg[: len(train_neg) // 10]
+                train_index = train_pos + train_neg
+                random.shuffle(train_index)
+                                
+                train_idx = torch.as_tensor(train_index, dtype=torch.long)
+                valid_idx = torch.as_tensor(valid_index, dtype=torch.long)
+                test_idx  = torch.as_tensor(test_index,  dtype=torch.long)
+                
+                train_dataset = Subset(Tensor_dataset, train_idx.tolist())
+                valid_dataset = Subset(Tensor_dataset, valid_idx.tolist())
+                test_dataset  = Subset(Tensor_dataset, test_idx.tolist())
+                
+                '''誤差(loss)を記録する空の配列を用意'''
+                loss_list = []
+                train_loss_list = []; train_acc_list = [];train_positive_list = []; train_F1_list = [];train_meanscore_list = [];
+                valid_loss_list = []; valid_acc_list = [];valid_positive_list = []; valid_F1_list = []; valid_auc_list = [];valid_meanscore_list = []
+                test_loss_list = []; test_acc_list = [];test_positive_list = []; test_F1_list = []; test_auc_list = [];test_meanscore_list = []
+                train_auc_list = []
+                train_prauc_list = []; valid_prauc_list = []; test_prauc_list = []
+                # train_meanscore_list と train_F1_list はすでに上で初期化済み
+
+                # 探索パラメータ
+                lr = trial.suggest_float("lr", 1e-4, 3e-3, log=True)
+                weight_decay = trial.suggest_float("weight_decay", 1e-6, 1e-2, log=True)
+                batch_size = trial.suggest_categorical("batch_size", [32, 64, 128])
+                dropout = trial.suggest_float("dropout", 0.0, 0.3)
+                base_ch = trial.suggest_categorical("base_channels", [16,32])
+                m1_size = trial.suggest_categorical("m1_size", [512, 1024, 2048, 4196])
+                m2_size = trial.suggest_categorical("m2_size", [256, 512, 1024])
+
+                # DataLoader（trialのbatch_size）
+                train_loader_for_train = DataLoader(
+                    train_dataset,
+                    batch_size=batch_size*6,
+                    shuffle=True,
+                    pin_memory=True,
+                    num_workers=24,
+                    prefetch_factor=4,
+                    persistent_workers=False
+                )
+                train_loader = DataLoader(
+                    train_dataset,
+                    batch_size=256,
+                    shuffle=False,
+                    pin_memory=True,
+                    num_workers=24,
+                    prefetch_factor=4,
+                    persistent_workers=False
+                )
+                valid_loader = DataLoader(
+                    valid_dataset,
+                    batch_size=256,
+                    shuffle=False,
+                    pin_memory=True,
+                    num_workers=24,
+                    prefetch_factor=4,
+                    persistent_workers=False
+                )
+                test_loader  = DataLoader(
+                    test_dataset,
+                    batch_size=256,
+                    shuffle=False,
+                    pin_memory=True,
+                    num_workers=24,
+                    prefetch_factor=4,
+                    persistent_workers=False
+                )
+
+                # モデル・最適化
+                model = CNN(base_channels = base_ch, dropout = dropout, m1 = m1_size, m2 = m2_size).float()
+                model = build_model(model)
+            
+                criterion = torch.nn.BCELoss()
+                optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+
+                # ログ蓄積（必要に応じて保持）
+                best_val_auc = -1.0
+                best_val_acc = 0.0
+                best_test_auc = 0.0
+                best_test_acc = 0.0
+                best_epoch = -1
+                wait = 0
+                best_state = None
+
+                for epoch in range(num_epochs):
+                    # トレーニング
+                    model.train()
+                    train(model, train_loader_for_train, criterion, device, optimizer)
+                
+                    # 評価
+                    model.eval()
+                    train_loss, train_acc, train_positive, train_F1, train_meanscore, train_auc = \
+                        eval_epoch(model, train_loader, criterion, device, logits_out=False, use_streaming_auc=True)
+                    valid_loss, valid_acc, valid_positive, valid_F1, valid_meanscore, valid_auc = \
+                        eval_epoch(model, valid_loader, criterion, device, logits_out=False, use_streaming_auc=True)
+                    test_loss, test_acc, test_positive, test_F1, test_meanscore, test_auc = \
+                        eval_epoch(model, test_loader,  criterion, device, logits_out=False, use_streaming_auc=True)
+
+                    train_loss_list.append(train_loss); train_acc_list.append(train_acc);train_positive_list.append(train_positive); train_F1_list.append(train_F1)
+                    valid_loss_list.append(valid_loss); valid_acc_list.append(valid_acc);valid_positive_list.append(valid_positive); valid_F1_list.append(valid_F1)
+                    test_loss_list.append(test_loss); test_acc_list.append(test_acc);test_positive_list.append(test_positive); test_F1_list.append(test_F1)
+                    train_meanscore_list.append(train_meanscore);valid_meanscore_list.append(valid_meanscore);test_meanscore_list.append(test_meanscore)
+                    train_auc_list.append(train_auc); valid_auc_list.append(valid_auc); test_auc_list.append(test_auc); train_prauc_list.append(train_prauc); valid_prauc_list.append(valid_prauc); test_prauc_list.append(test_prauc)
+
+                    if valid_auc > best_val_auc:
+                        best_val_auc = valid_auc
+                        best_val_acc = getattr(valid_acc, "item", lambda: valid_acc)()
+                        best_test_auc = test_auc
+                        best_test_acc = getattr(test_acc, "item", lambda: test_acc)()
+                        best_epoch = epoch + 1
+                        best_state = copy.deepcopy(model.state_dict())
+                        wait = 0
+                    else:
+                        wait += 1
+                
+                    print(f'n = {n} | epoch {epoch+1:03d} | valid_auc {float(valid_auc):.4f} | test_auc {float(test_auc):.4f} | best {best_val_auc:.4f}| wait {wait} ')
+                
+                    # 早期終了（patience）→ ループを抜けて特徴抽出+LGBMへ
+                    if wait >= patience:
+                        break
+
+                    # Optuna prune（性能が低いのでLGBMはスキップ、CNN値のみ記録）
+                    if trial.should_prune():
+                        final_df = pd.read_csv(CSV_PATH, index_col = 0)
+                        tmp_df = pd.DataFrame([{
+                            "pref":n, "n":len(final_df), "epoch":best_epoch,"learning_rate":lr,"weight_decay":weight_decay,"batch_size":batch_size,
+                            "m1_size":m1_size,"m2_size":m2_size, "dropout":dropout,"base_channels":base_ch,
+                            "train_y":0, "train_acc":train_acc, "train_positive":train_positive, "train_meanscore":train_meanscore,
+                            "valid_y":0,"valid_acc":best_val_acc,"valid_auc":float("nan"),"CNN_valid_auc":best_val_auc, "valid_positive":valid_positive, "valid_meanscore":valid_meanscore,
+                            "test_y":0, "test_acc":best_test_acc, "test_auc":float("nan"),"CNN_test_auc":best_test_auc,"test_positive":test_positive,  "test_meanscore":test_meanscore
+                        }])
+                    
+                        final_df = pd.concat([final_df, tmp_df], ignore_index=True)
+                        final_df.to_csv(CSV_PATH)
+                        datalist = [train_loss_list, valid_loss_list, test_loss_list,
+                                    train_acc_list, valid_acc_list,test_acc_list,
+                                    train_positive_list, valid_positive_list, test_positive_list,
+                                    train_F1_list, valid_F1_list, test_F1_list,
+                                    train_auc_list, valid_auc_list, test_auc_list,
+                                    train_meanscore_list, valid_meanscore_list, test_meanscore_list, train_prauc_list, valid_prauc_list, test_prauc_list]
+                        seve_metrics(f"{TEST_GRP}-Res18-LGBM-optina-植生あり" + str(len(final_df)-1) , datalist = datalist)
+                        # prune を投げる → attempt ループの外にそのまま伝搬（OOM ではないのでリトライしない）
+                        raise optuna.TrialPruned()
+
+                # ======== CNN特徴抽出 → LightGBM ========
+                if best_state is not None:
+                    model.load_state_dict(best_state)
+                Xtr, ytr = extract_cnn_features(model, train_loader, device, dann=False)
+                Xva, yva = extract_cnn_features(model, valid_loader, device, dann=False)
+                Xte, yte = extract_cnn_features(model, test_loader,  device, dann=False)
+                _clf, mtr, mva, mte = train_eval_lgbm(Xtr, ytr, Xva, yva, Xte, yte)
+                # --- per-trial best モデル保存（CNN best_state + LGBMヘッド + メタ）---
+                import joblib as _joblib
+                _m = model.module if isinstance(model, torch.nn.DataParallel) else model
+                _pkg = {"model": "cnn_lgbm", "trial": int(trial.number), "epoch": int(best_epoch),
+                        "cnn_valid_auc": float(best_val_auc), "lgbm_valid_auc": float(mva["auc"]),
+                        "params": dict(trial.params),
+                        "cnn_state_dict": {k: v.detach().cpu().clone() for k, v in _m.state_dict().items()},
+                        "lgbm_head": _clf}
+                os.makedirs("optuna_models", exist_ok=True)
+                _joblib.dump(_pkg, f"optuna_models/cnn_lgbm_trial{int(trial.number)}_best.pkl")
+                if float(mva["auc"]) > _GLOBAL_BEST_AUC[0]:
+                    _GLOBAL_BEST_AUC[0] = float(mva["auc"])
+                    _joblib.dump(_pkg, "optuna_models/cnn_lgbm_best.pkl")
+
+                final_df = pd.read_csv(CSV_PATH, index_col = 0)
+                tmp_df = pd.DataFrame([{
+                    "pref":n, "n":len(final_df), "epoch":best_epoch,"learning_rate":lr,"weight_decay":weight_decay,"batch_size":batch_size,
+                    "m1_size":m1_size,"m2_size":m2_size, "dropout":dropout,"base_channels":base_ch,
+                    "train_y":0, "train_acc":mtr["acc"], "train_positive":mtr["positive"], "train_meanscore":mtr["meanscore"], "train_prauc":mtr["prauc"],
+                    "valid_y":0,"valid_acc":mva["acc"],"valid_auc":mva["auc"],"CNN_valid_auc":best_val_auc, "valid_positive":mva["positive"], "valid_meanscore":mva["meanscore"], "valid_prauc":mva["prauc"],
+                    "test_y":0, "test_acc":mte["acc"], "test_auc":mte["auc"],"CNN_test_auc":best_test_auc,"test_positive":mte["positive"],  "test_meanscore":mte["meanscore"], "test_prauc":mte["prauc"]
+                }])
+                final_df = pd.concat([final_df, tmp_df], ignore_index=True)
+                final_df.to_csv(CSV_PATH)
+                datalist = [train_loss_list, valid_loss_list, test_loss_list,
+                            train_acc_list, valid_acc_list,test_acc_list,
+                            train_positive_list, valid_positive_list, test_positive_list,
+                            train_F1_list, valid_F1_list, test_F1_list,
+                            train_auc_list, valid_auc_list, test_auc_list,
+                            train_meanscore_list, valid_meanscore_list, test_meanscore_list, train_prauc_list, valid_prauc_list, test_prauc_list]
+                seve_metrics(f"{TEST_GRP}-Res18-LGBM-optina-植生あり" + str(len(final_df)-1) , datalist = datalist)
+
+                # 正常終了時
+                del model
+                del optimizer
+                torch.cuda.empty_cache()
+                return mva["auc"]
+
+            # ===== OOM を捕捉してリトライ =====
+            except torch.cuda.OutOfMemoryError as e:
+                print(f"[Trial {trial.number}] CUDA OOM on attempt {attempt}/{MAX_RETRIES_PER_TRIAL}: {e}")
+            except RuntimeError as e:
+                if "out of memory" in str(e).lower():
+                    print(f"[Trial {trial.number}] RuntimeError OOM on attempt {attempt}/{MAX_RETRIES_PER_TRIAL}: {e}")
+                else:
+                    # 別の RuntimeError はそのまま投げる
+                    raise
+
+            # ここに来た時点で OOM とみなす
+            torch.cuda.empty_cache()
+            gc.collect()
+
+            if attempt == MAX_RETRIES_PER_TRIAL:
+                print(f"[Trial {trial.number}] Reached max OOM retries. Pruning trial.")
+                raise optuna.TrialPruned()
+
+            print(f"[Trial {trial.number}] Waiting {WAIT_SECONDS} seconds before retry...")
+            time.sleep(WAIT_SECONDS)
+
+
+    # ---- このfold用のStudyを作成・実行 ----
+    study = optuna.create_study(
+        study_name=f"fold_{n}",
+        direction="maximize",
+        sampler=optuna.samplers.TPESampler(seed=SEED),
+        pruner=MedianPruner(n_startup_trials=5, n_warmup_steps=5),
+    )
+    study.optimize(objective, n_trials=5, gc_after_trial=True, n_jobs=1)
+
+
+------------------
+
+----- stderr -----
+[I 2026-06-15 02:22:44,257] A new study created in memory with name: fold_0
+----- stdout -----
+Training on fold 0: test=宮城県, valid=山形県
+[Trial 0] Attempt 1/5
+----- stderr -----
+[W 2026-06-15 02:22:46,071] Trial 0 failed with parameters: {'lr': 0.0003574712922600243, 'weight_decay': 0.006351221010640704, 'batch_size': 32, 'dropout': 0.04679835610086079, 'base_channels': 32, 'm1_size': 4196, 'm2_size': 256} because of the following error: NameError("name 'device' is not defined").
+Traceback (most recent call last):
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/optuna/study/_optimize.py", line 201, in _run_trial
+    value_or_values = func(trial)
+                      ^^^^^^^^^^^
+  File "/tmp/ipykernel_3407298/4016730923.py", line 120, in objective
+    model = build_model(model)
+            ^^^^^^^^^^^^^^^^^^
+  File "/tmp/ipykernel_3407298/621038278.py", line 135, in build_model
+    model = model.to(device)
+                     ^^^^^^
+NameError: name 'device' is not defined
+----- stderr -----
+[W 2026-06-15 02:22:46,168] Trial 0 failed with value None.
+------------------
+
+[0;31m---------------------------------------------------------------------------[0m
+[0;31mNameError[0m                                 Traceback (most recent call last)
+Cell [0;32mIn[12], line 268[0m
+[1;32m    261[0m [38;5;66;03m# ---- このfold用のStudyを作成・実行 ----[39;00m
+[1;32m    262[0m study [38;5;241m=[39m optuna[38;5;241m.[39mcreate_study(
+[1;32m    263[0m     study_name[38;5;241m=[39m[38;5;124mf[39m[38;5;124m"[39m[38;5;124mfold_[39m[38;5;132;01m{[39;00mn[38;5;132;01m}[39;00m[38;5;124m"[39m,
+[1;32m    264[0m     direction[38;5;241m=[39m[38;5;124m"[39m[38;5;124mmaximize[39m[38;5;124m"[39m,
+[1;32m    265[0m     sampler[38;5;241m=[39moptuna[38;5;241m.[39msamplers[38;5;241m.[39mTPESampler(seed[38;5;241m=[39mSEED),
+[1;32m    266[0m     pruner[38;5;241m=[39mMedianPruner(n_startup_trials[38;5;241m=[39m[38;5;241m5[39m, n_warmup_steps[38;5;241m=[39m[38;5;241m5[39m),
+[1;32m    267[0m )
+[0;32m--> 268[0m study[38;5;241m.[39moptimize(objective, n_trials[38;5;241m=[39m[38;5;241m5[39m, gc_after_trial[38;5;241m=[39m[38;5;28;01mTrue[39;00m, n_jobs[38;5;241m=[39m[38;5;241m1[39m)
+
+File [0;32m~/anaconda3/lib/python3.11/site-packages/optuna/study/study.py:490[0m, in [0;36mStudy.optimize[0;34m(self, func, n_trials, timeout, n_jobs, catch, callbacks, gc_after_trial, show_progress_bar)[0m
+[1;32m    388[0m [38;5;28;01mdef[39;00m [38;5;21moptimize[39m(
+[1;32m    389[0m     [38;5;28mself[39m,
+[1;32m    390[0m     func: ObjectiveFuncType,
+[0;32m   (...)[0m
+[1;32m    397[0m     show_progress_bar: [38;5;28mbool[39m [38;5;241m=[39m [38;5;28;01mFalse[39;00m,
+[1;32m    398[0m ) [38;5;241m-[39m[38;5;241m>[39m [38;5;28;01mNone[39;00m:
+[1;32m    399[0m [38;5;250m    [39m[38;5;124;03m"""Optimize an objective function.[39;00m
+[1;32m    400[0m 
+[1;32m    401[0m [38;5;124;03m    Optimization is done by choosing a suitable set of hyperparameter values from a given[39;00m
+[0;32m   (...)[0m
+[1;32m    488[0m [38;5;124;03m            If nested invocation of this method occurs.[39;00m
+[1;32m    489[0m [38;5;124;03m    """[39;00m
+[0;32m--> 490[0m     _optimize(
+[1;32m    491[0m         study[38;5;241m=[39m[38;5;28mself[39m,
+[1;32m    492[0m         func[38;5;241m=[39mfunc,
+[1;32m    493[0m         n_trials[38;5;241m=[39mn_trials,
+[1;32m    494[0m         timeout[38;5;241m=[39mtimeout,
+[1;32m    495[0m         n_jobs[38;5;241m=[39mn_jobs,
+[1;32m    496[0m         catch[38;5;241m=[39m[38;5;28mtuple[39m(catch) [38;5;28;01mif[39;00m [38;5;28misinstance[39m(catch, Iterable) [38;5;28;01melse[39;00m (catch,),
+[1;32m    497[0m         callbacks[38;5;241m=[39mcallbacks,
+[1;32m    498[0m         gc_after_trial[38;5;241m=[39mgc_after_trial,
+[1;32m    499[0m         show_progress_bar[38;5;241m=[39mshow_progress_bar,
+[1;32m    500[0m     )
+
+File [0;32m~/anaconda3/lib/python3.11/site-packages/optuna/study/_optimize.py:63[0m, in [0;36m_optimize[0;34m(study, func, n_trials, timeout, n_jobs, catch, callbacks, gc_after_trial, show_progress_bar)[0m
+[1;32m     61[0m [38;5;28;01mtry[39;00m:
+[1;32m     62[0m     [38;5;28;01mif[39;00m n_jobs [38;5;241m==[39m [38;5;241m1[39m:
+[0;32m---> 63[0m         _optimize_sequential(
+[1;32m     64[0m             study,
+[1;32m     65[0m             func,
+[1;32m     66[0m             n_trials,
+[1;32m     67[0m             timeout,
+[1;32m     68[0m             catch,
+[1;32m     69[0m             callbacks,
+[1;32m     70[0m             gc_after_trial,
+[1;32m     71[0m             reseed_sampler_rng[38;5;241m=[39m[38;5;28;01mFalse[39;00m,
+[1;32m     72[0m             time_start[38;5;241m=[39m[38;5;28;01mNone[39;00m,
+[1;32m     73[0m             progress_bar[38;5;241m=[39mprogress_bar,
+[1;32m     74[0m         )
+[1;32m     75[0m     [38;5;28;01melse[39;00m:
+[1;32m     76[0m         [38;5;28;01mif[39;00m n_jobs [38;5;241m==[39m [38;5;241m-[39m[38;5;241m1[39m:
+
+File [0;32m~/anaconda3/lib/python3.11/site-packages/optuna/study/_optimize.py:160[0m, in [0;36m_optimize_sequential[0;34m(study, func, n_trials, timeout, catch, callbacks, gc_after_trial, reseed_sampler_rng, time_start, progress_bar)[0m
+[1;32m    157[0m         [38;5;28;01mbreak[39;00m
+[1;32m    159[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 160[0m     frozen_trial_id [38;5;241m=[39m _run_trial(study, func, catch)
+[1;32m    161[0m [38;5;28;01mfinally[39;00m:
+[1;32m    162[0m     [38;5;66;03m# The following line mitigates memory problems that can be occurred in some[39;00m
+[1;32m    163[0m     [38;5;66;03m# environments (e.g., services that use computing containers such as GitHub Actions).[39;00m
+[1;32m    164[0m     [38;5;66;03m# Please refer to the following PR for further details:[39;00m
+[1;32m    165[0m     [38;5;66;03m# https://github.com/optuna/optuna/pull/325.[39;00m
+[1;32m    166[0m     [38;5;28;01mif[39;00m gc_after_trial:
+
+File [0;32m~/anaconda3/lib/python3.11/site-packages/optuna/study/_optimize.py:258[0m, in [0;36m_run_trial[0;34m(study, func, catch)[0m
+[1;32m    251[0m         [38;5;28;01massert[39;00m [38;5;28;01mFalse[39;00m, [38;5;124m"[39m[38;5;124mShould not reach.[39m[38;5;124m"[39m
+[1;32m    253[0m [38;5;28;01mif[39;00m (
+[1;32m    254[0m     updated_state [38;5;241m==[39m TrialState[38;5;241m.[39mFAIL
+[1;32m    255[0m     [38;5;129;01mand[39;00m func_err [38;5;129;01mis[39;00m [38;5;129;01mnot[39;00m [38;5;28;01mNone[39;00m
+[1;32m    256[0m     [38;5;129;01mand[39;00m [38;5;129;01mnot[39;00m [38;5;28misinstance[39m(func_err, catch)
+[1;32m    257[0m ):
+[0;32m--> 258[0m     [38;5;28;01mraise[39;00m func_err
+[1;32m    259[0m [38;5;28;01mreturn[39;00m trial[38;5;241m.[39m_trial_id
+
+File [0;32m~/anaconda3/lib/python3.11/site-packages/optuna/study/_optimize.py:201[0m, in [0;36m_run_trial[0;34m(study, func, catch)[0m
+[1;32m    199[0m [38;5;28;01mwith[39;00m get_heartbeat_thread(trial[38;5;241m.[39m_trial_id, study[38;5;241m.[39m_storage):
+[1;32m    200[0m     [38;5;28;01mtry[39;00m:
+[0;32m--> 201[0m         value_or_values [38;5;241m=[39m func(trial)
+[1;32m    202[0m     [38;5;28;01mexcept[39;00m exceptions[38;5;241m.[39mTrialPruned [38;5;28;01mas[39;00m e:
+[1;32m    203[0m         [38;5;66;03m# TODO(mamu): Handle multi-objective cases.[39;00m
+[1;32m    204[0m         state [38;5;241m=[39m TrialState[38;5;241m.[39mPRUNED
+
+Cell [0;32mIn[12], line 120[0m, in [0;36mobjective[0;34m(trial)[0m
+[1;32m    118[0m [38;5;66;03m# モデル・最適化[39;00m
+[1;32m    119[0m model [38;5;241m=[39m CNN(base_channels [38;5;241m=[39m base_ch, dropout [38;5;241m=[39m dropout, m1 [38;5;241m=[39m m1_size, m2 [38;5;241m=[39m m2_size)[38;5;241m.[39mfloat()
+[0;32m--> 120[0m model [38;5;241m=[39m build_model(model)
+[1;32m    122[0m criterion [38;5;241m=[39m torch[38;5;241m.[39mnn[38;5;241m.[39mBCELoss()
+[1;32m    123[0m optimizer [38;5;241m=[39m torch[38;5;241m.[39moptim[38;5;241m.[39mAdam(model[38;5;241m.[39mparameters(), lr[38;5;241m=[39mlr, weight_decay[38;5;241m=[39mweight_decay)
+
+Cell [0;32mIn[10], line 135[0m, in [0;36mbuild_model[0;34m(model)[0m
+[1;32m    132[0m [38;5;28;01mdef[39;00m [38;5;21mbuild_model[39m(model):
+[1;32m    133[0m     [38;5;66;03m# ① モデルインスタンス化（Lazyレイヤ含む）[39;00m
+[1;32m    134[0m     [38;5;66;03m# ② まず単一GPUに乗せる[39;00m
+[0;32m--> 135[0m     model [38;5;241m=[39m model[38;5;241m.[39mto(device)
+[1;32m    137[0m     [38;5;66;03m# ③ ダミー入力で一度だけ forward して Lazyレイヤを初期化[39;00m
+[1;32m    138[0m     [38;5;28;01mwith[39;00m torch[38;5;241m.[39mno_grad():
+[1;32m    139[0m         [38;5;66;03m# ここは実データと同じ形に合わせることが重要[39;00m
+
+[0;31mNameError[0m: name 'device' is not defined
+
+==== launch 2026-06-15 02:27:11 host=beaver CUDA_VISIBLE_DEVICES=5 nb=実験3-宮城県-ResCNN_LGBM.ipynb ====
+[NbConvertApp] Converting notebook 実験3-宮城県-ResCNN_LGBM.ipynb to notebook
+0.00s - Debugger warning: It seems that frozen modules are being used, which may
+0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off
+0.00s - to python to disable frozen modules.
+0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.
+[IPKernelApp] WARNING | Parent appears to have exited, shutting down.
+==== launch 2026-06-15 02:33:51 host=mole CUDA_VISIBLE_DEVICES=1 nb=実験3-宮城県-ResCNN_LGBM.ipynb ====
+[NbConvertApp] Converting notebook 実験3-宮城県-ResCNN_LGBM.ipynb to notebook
+0.00s - Debugger warning: It seems that frozen modules are being used, which may
+0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off
+0.00s - to python to disable frozen modules.
+0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.
+[NbConvertApp] WARNING | Wait for final termination of kernel timed out - continuing...
+Traceback (most recent call last):
+  File "/home/hasegawakazuki/anaconda3/bin/jupyter-nbconvert", line 11, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/jupyter_core/application.py", line 280, in launch_instance
+    super().launch_instance(argv=argv, **kwargs)
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/traitlets/config/application.py", line 992, in launch_instance
+    app.start()
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbconvert/nbconvertapp.py", line 412, in start
+    self.convert_notebooks()
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbconvert/nbconvertapp.py", line 590, in convert_notebooks
+    self.convert_single_notebook(notebook_filename)
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbconvert/nbconvertapp.py", line 556, in convert_single_notebook
+    output, resources = self.export_single_notebook(
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbconvert/nbconvertapp.py", line 479, in export_single_notebook
+    output, resources = self.exporter.from_filename(
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbconvert/exporters/exporter.py", line 203, in from_filename
+    return self.from_file(f, resources=resources, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbconvert/exporters/exporter.py", line 222, in from_file
+    return self.from_notebook_node(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbconvert/exporters/notebook.py", line 36, in from_notebook_node
+    nb_copy, resources = super().from_notebook_node(nb, resources, **kw)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbconvert/exporters/exporter.py", line 156, in from_notebook_node
+    nb_copy, resources = self._preprocess(nb_copy, resources)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbconvert/exporters/exporter.py", line 354, in _preprocess
+    nbc, resc = preprocessor(nbc, resc)  # type:ignore[operator]
+                ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbconvert/preprocessors/base.py", line 48, in __call__
+    return self.preprocess(nb, resources)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbconvert/preprocessors/execute.py", line 102, in preprocess
+    self.preprocess_cell(cell, resources, index)
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbconvert/preprocessors/execute.py", line 123, in preprocess_cell
+    cell = self.execute_cell(cell, index, store_history=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/jupyter_core/utils/__init__.py", line 173, in wrapped
+    return loop.run_until_complete(inner)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/asyncio/base_events.py", line 653, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbclient/client.py", line 1058, in async_execute_cell
+    await self._check_raise_for_error(cell, cell_index, exec_reply)
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/nbclient/client.py", line 914, in _check_raise_for_error
+    raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
+nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
+------------------
+# 5. 空間的クロスバリデーションによる学習と評価 + Optuna
+Lcluster = []; LACC = []; Lauc = []
+try:
+    final_df = pd.read_csv("optuna_results/宮城県-Res18-LGBM-optina-植生あり.csv")
+except:
+    final_df = pd.DataFrame(columns=["pref", "n", "epoch","learning_rate","weight_decay","batch_size", "m1_size","m2_size", "dropout","base_channels",
+                    "train_y", "train_acc", "train_positive", "train_meanscore","valid_y","valid_acc","valid_auc","CNN_valid_auc", "valid_positive", "valid_meanscore",
+                    "test_y", "test_acc", "test_auc","CNN_test_auc","test_positive",  "test_meanscore"
+                ])
+    final_df.to_csv("optuna_results/宮城県-Res18-LGBM-optina-植生あり.csv")
+num_n = len(final_df)
+Nth = 1
+patience = 10 # アーリーストッピング用
+FOLDS = [("宮城県","山形県"),("山形県","岩手県"),("岩手県","福島県"),("福島県","秋田県"),("秋田県","宮城県")]
+for n, (TEST_GRP, VALID_GRP) in enumerate(FOLDS):
+
+    CSV_PATH = f"optuna_results/{TEST_GRP}-Res18-LGBM-optina-植生あり.csv"
+    if not os.path.exists(CSV_PATH):
+        pd.DataFrame(columns=final_df.columns).to_csv(CSV_PATH)
+    print(f"Training on fold {n}: test={TEST_GRP}, valid={VALID_GRP}")
+
+    num_epochs = 200
+    patience = 10 # アーリーストッピング用
+
+    WAIT_SECONDS = 1800          # 例：3分待つ
+    MAX_RETRIES_PER_TRIAL = 5   # 例：1 trial につき 3回までリトライ
+
+    # ---- 目的関数：このfoldのsplitを固定したまま、trialごとに学習 ----
+    _GLOBAL_BEST_AUC = [-1.0]
+    def objective(trial: optuna.Trial):
+        for attempt in range(1, MAX_RETRIES_PER_TRIAL + 1):
+            try:
+                print(f"[Trial {trial.number}] Attempt {attempt}/{MAX_RETRIES_PER_TRIAL}")
+
+                ########## データ分割: 実験3整合の持ち回り（test=TEST_GRP / valid=VALID_GRP / train=残り。割合は実験3の県別件数に一致）##########
+                SEED = 42
+                test_index  = list(dataset.index[dataset["fold_group"] == TEST_GRP])
+                valid_index = list(dataset.index[dataset["fold_group"] == VALID_GRP])
+                train_index = list(dataset.index[(dataset["fold_group"] != TEST_GRP) & (dataset["fold_group"] != VALID_GRP)])
+                random.seed(SEED)  # ダウンサンプリングを再現可能に
+                random.shuffle(test_index)
+                random.shuffle(valid_index)
+                random.shuffle(train_index)
+
+                # train の負例(kuma_view==0)を 1/10 にダウンサンプリング（正例は全て保持）
+                _labels = dataset["kuma_view"]
+                train_pos = [i for i in train_index if _labels[i] == 1]
+                train_neg = [i for i in train_index if _labels[i] == 0]
+                random.shuffle(train_neg)
+                train_neg = train_neg[: len(train_neg) // 10]
+                train_index = train_pos + train_neg
+                random.shuffle(train_index)
+                                
+                train_idx = torch.as_tensor(train_index, dtype=torch.long)
+                valid_idx = torch.as_tensor(valid_index, dtype=torch.long)
+                test_idx  = torch.as_tensor(test_index,  dtype=torch.long)
+                
+                train_dataset = Subset(Tensor_dataset, train_idx.tolist())
+                valid_dataset = Subset(Tensor_dataset, valid_idx.tolist())
+                test_dataset  = Subset(Tensor_dataset, test_idx.tolist())
+                
+                '''誤差(loss)を記録する空の配列を用意'''
+                loss_list = []
+                train_loss_list = []; train_acc_list = [];train_positive_list = []; train_F1_list = [];train_meanscore_list = [];
+                valid_loss_list = []; valid_acc_list = [];valid_positive_list = []; valid_F1_list = []; valid_auc_list = [];valid_meanscore_list = []
+                test_loss_list = []; test_acc_list = [];test_positive_list = []; test_F1_list = []; test_auc_list = [];test_meanscore_list = []
+                train_auc_list = []
+                train_prauc_list = []; valid_prauc_list = []; test_prauc_list = []
+                # train_meanscore_list と train_F1_list はすでに上で初期化済み
+
+                # 探索パラメータ
+                lr = trial.suggest_float("lr", 1e-4, 3e-3, log=True)
+                weight_decay = trial.suggest_float("weight_decay", 1e-6, 1e-2, log=True)
+                batch_size = trial.suggest_categorical("batch_size", [32, 64, 128])
+                dropout = trial.suggest_float("dropout", 0.0, 0.3)
+                base_ch = trial.suggest_categorical("base_channels", [16,32])
+                m1_size = trial.suggest_categorical("m1_size", [512, 1024, 2048, 4196])
+                m2_size = trial.suggest_categorical("m2_size", [256, 512, 1024])
+
+                # DataLoader（trialのbatch_size）
+                train_loader_for_train = DataLoader(
+                    train_dataset,
+                    batch_size=batch_size*6,
+                    shuffle=True,
+                    pin_memory=True,
+                    num_workers=24,
+                    prefetch_factor=4,
+                    persistent_workers=False
+                )
+                train_loader = DataLoader(
+                    train_dataset,
+                    batch_size=256,
+                    shuffle=False,
+                    pin_memory=True,
+                    num_workers=24,
+                    prefetch_factor=4,
+                    persistent_workers=False
+                )
+                valid_loader = DataLoader(
+                    valid_dataset,
+                    batch_size=256,
+                    shuffle=False,
+                    pin_memory=True,
+                    num_workers=24,
+                    prefetch_factor=4,
+                    persistent_workers=False
+                )
+                test_loader  = DataLoader(
+                    test_dataset,
+                    batch_size=256,
+                    shuffle=False,
+                    pin_memory=True,
+                    num_workers=24,
+                    prefetch_factor=4,
+                    persistent_workers=False
+                )
+
+                # モデル・最適化
+                model = CNN(base_channels = base_ch, dropout = dropout, m1 = m1_size, m2 = m2_size).float()
+                model = build_model(model)
+            
+                criterion = torch.nn.BCELoss()
+                optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+
+                # ログ蓄積（必要に応じて保持）
+                best_val_auc = -1.0
+                best_val_acc = 0.0
+                best_test_auc = 0.0
+                best_test_acc = 0.0
+                best_epoch = -1
+                wait = 0
+                best_state = None
+
+                for epoch in range(num_epochs):
+                    # トレーニング
+                    model.train()
+                    train(model, train_loader_for_train, criterion, device, optimizer)
+                
+                    # 評価
+                    model.eval()
+                    train_loss, train_acc, train_positive, train_F1, train_meanscore, train_auc = \
+                        eval_epoch(model, train_loader, criterion, device, logits_out=False, use_streaming_auc=True)
+                    valid_loss, valid_acc, valid_positive, valid_F1, valid_meanscore, valid_auc = \
+                        eval_epoch(model, valid_loader, criterion, device, logits_out=False, use_streaming_auc=True)
+                    test_loss, test_acc, test_positive, test_F1, test_meanscore, test_auc = \
+                        eval_epoch(model, test_loader,  criterion, device, logits_out=False, use_streaming_auc=True)
+
+                    train_loss_list.append(train_loss); train_acc_list.append(train_acc);train_positive_list.append(train_positive); train_F1_list.append(train_F1)
+                    valid_loss_list.append(valid_loss); valid_acc_list.append(valid_acc);valid_positive_list.append(valid_positive); valid_F1_list.append(valid_F1)
+                    test_loss_list.append(test_loss); test_acc_list.append(test_acc);test_positive_list.append(test_positive); test_F1_list.append(test_F1)
+                    train_meanscore_list.append(train_meanscore);valid_meanscore_list.append(valid_meanscore);test_meanscore_list.append(test_meanscore)
+                    train_auc_list.append(train_auc); valid_auc_list.append(valid_auc); test_auc_list.append(test_auc); train_prauc_list.append(train_prauc); valid_prauc_list.append(valid_prauc); test_prauc_list.append(test_prauc)
+
+                    if valid_auc > best_val_auc:
+                        best_val_auc = valid_auc
+                        best_val_acc = getattr(valid_acc, "item", lambda: valid_acc)()
+                        best_test_auc = test_auc
+                        best_test_acc = getattr(test_acc, "item", lambda: test_acc)()
+                        best_epoch = epoch + 1
+                        best_state = copy.deepcopy(model.state_dict())
+                        wait = 0
+                    else:
+                        wait += 1
+                
+                    print(f'n = {n} | epoch {epoch+1:03d} | valid_auc {float(valid_auc):.4f} | test_auc {float(test_auc):.4f} | best {best_val_auc:.4f}| wait {wait} ')
+                
+                    # 早期終了（patience）→ ループを抜けて特徴抽出+LGBMへ
+                    if wait >= patience:
+                        break
+
+                    # Optuna prune（性能が低いのでLGBMはスキップ、CNN値のみ記録）
+                    if trial.should_prune():
+                        final_df = pd.read_csv(CSV_PATH, index_col = 0)
+                        tmp_df = pd.DataFrame([{
+                            "pref":n, "n":len(final_df), "epoch":best_epoch,"learning_rate":lr,"weight_decay":weight_decay,"batch_size":batch_size,
+                            "m1_size":m1_size,"m2_size":m2_size, "dropout":dropout,"base_channels":base_ch,
+                            "train_y":0, "train_acc":train_acc, "train_positive":train_positive, "train_meanscore":train_meanscore,
+                            "valid_y":0,"valid_acc":best_val_acc,"valid_auc":float("nan"),"CNN_valid_auc":best_val_auc, "valid_positive":valid_positive, "valid_meanscore":valid_meanscore,
+                            "test_y":0, "test_acc":best_test_acc, "test_auc":float("nan"),"CNN_test_auc":best_test_auc,"test_positive":test_positive,  "test_meanscore":test_meanscore
+                        }])
+                    
+                        final_df = pd.concat([final_df, tmp_df], ignore_index=True)
+                        final_df.to_csv(CSV_PATH)
+                        datalist = [train_loss_list, valid_loss_list, test_loss_list,
+                                    train_acc_list, valid_acc_list,test_acc_list,
+                                    train_positive_list, valid_positive_list, test_positive_list,
+                                    train_F1_list, valid_F1_list, test_F1_list,
+                                    train_auc_list, valid_auc_list, test_auc_list,
+                                    train_meanscore_list, valid_meanscore_list, test_meanscore_list, train_prauc_list, valid_prauc_list, test_prauc_list]
+                        seve_metrics(f"{TEST_GRP}-Res18-LGBM-optina-植生あり" + str(len(final_df)-1) , datalist = datalist)
+                        # prune を投げる → attempt ループの外にそのまま伝搬（OOM ではないのでリトライしない）
+                        raise optuna.TrialPruned()
+
+                # ======== CNN特徴抽出 → LightGBM ========
+                if best_state is not None:
+                    model.load_state_dict(best_state)
+                Xtr, ytr = extract_cnn_features(model, train_loader, device, dann=False)
+                Xva, yva = extract_cnn_features(model, valid_loader, device, dann=False)
+                Xte, yte = extract_cnn_features(model, test_loader,  device, dann=False)
+                _clf, mtr, mva, mte = train_eval_lgbm(Xtr, ytr, Xva, yva, Xte, yte)
+                # --- per-trial best モデル保存（CNN best_state + LGBMヘッド + メタ）---
+                import joblib as _joblib
+                _m = model.module if isinstance(model, torch.nn.DataParallel) else model
+                _pkg = {"model": "cnn_lgbm", "trial": int(trial.number), "epoch": int(best_epoch),
+                        "cnn_valid_auc": float(best_val_auc), "lgbm_valid_auc": float(mva["auc"]),
+                        "params": dict(trial.params),
+                        "cnn_state_dict": {k: v.detach().cpu().clone() for k, v in _m.state_dict().items()},
+                        "lgbm_head": _clf}
+                os.makedirs("optuna_models", exist_ok=True)
+                _joblib.dump(_pkg, f"optuna_models/cnn_lgbm_trial{int(trial.number)}_best.pkl")
+                if float(mva["auc"]) > _GLOBAL_BEST_AUC[0]:
+                    _GLOBAL_BEST_AUC[0] = float(mva["auc"])
+                    _joblib.dump(_pkg, "optuna_models/cnn_lgbm_best.pkl")
+
+                final_df = pd.read_csv(CSV_PATH, index_col = 0)
+                tmp_df = pd.DataFrame([{
+                    "pref":n, "n":len(final_df), "epoch":best_epoch,"learning_rate":lr,"weight_decay":weight_decay,"batch_size":batch_size,
+                    "m1_size":m1_size,"m2_size":m2_size, "dropout":dropout,"base_channels":base_ch,
+                    "train_y":0, "train_acc":mtr["acc"], "train_positive":mtr["positive"], "train_meanscore":mtr["meanscore"], "train_prauc":mtr["prauc"],
+                    "valid_y":0,"valid_acc":mva["acc"],"valid_auc":mva["auc"],"CNN_valid_auc":best_val_auc, "valid_positive":mva["positive"], "valid_meanscore":mva["meanscore"], "valid_prauc":mva["prauc"],
+                    "test_y":0, "test_acc":mte["acc"], "test_auc":mte["auc"],"CNN_test_auc":best_test_auc,"test_positive":mte["positive"],  "test_meanscore":mte["meanscore"], "test_prauc":mte["prauc"]
+                }])
+                final_df = pd.concat([final_df, tmp_df], ignore_index=True)
+                final_df.to_csv(CSV_PATH)
+                datalist = [train_loss_list, valid_loss_list, test_loss_list,
+                            train_acc_list, valid_acc_list,test_acc_list,
+                            train_positive_list, valid_positive_list, test_positive_list,
+                            train_F1_list, valid_F1_list, test_F1_list,
+                            train_auc_list, valid_auc_list, test_auc_list,
+                            train_meanscore_list, valid_meanscore_list, test_meanscore_list, train_prauc_list, valid_prauc_list, test_prauc_list]
+                seve_metrics(f"{TEST_GRP}-Res18-LGBM-optina-植生あり" + str(len(final_df)-1) , datalist = datalist)
+
+                # 正常終了時
+                del model
+                del optimizer
+                torch.cuda.empty_cache()
+                return mva["auc"]
+
+            # ===== OOM を捕捉してリトライ =====
+            except torch.cuda.OutOfMemoryError as e:
+                print(f"[Trial {trial.number}] CUDA OOM on attempt {attempt}/{MAX_RETRIES_PER_TRIAL}: {e}")
+            except RuntimeError as e:
+                if "out of memory" in str(e).lower():
+                    print(f"[Trial {trial.number}] RuntimeError OOM on attempt {attempt}/{MAX_RETRIES_PER_TRIAL}: {e}")
+                else:
+                    # 別の RuntimeError はそのまま投げる
+                    raise
+
+            # ここに来た時点で OOM とみなす
+            torch.cuda.empty_cache()
+            gc.collect()
+
+            if attempt == MAX_RETRIES_PER_TRIAL:
+                print(f"[Trial {trial.number}] Reached max OOM retries. Pruning trial.")
+                raise optuna.TrialPruned()
+
+            print(f"[Trial {trial.number}] Waiting {WAIT_SECONDS} seconds before retry...")
+            time.sleep(WAIT_SECONDS)
+
+
+    # ---- このfold用のStudyを作成・実行 ----
+    study = optuna.create_study(
+        study_name=f"fold_{n}",
+        direction="maximize",
+        sampler=optuna.samplers.TPESampler(seed=SEED),
+        pruner=MedianPruner(n_startup_trials=5, n_warmup_steps=5),
+    )
+    study.optimize(objective, n_trials=5, gc_after_trial=True, n_jobs=1)
+
+
+------------------
+
+----- stderr -----
+[I 2026-06-15 02:54:05,877] A new study created in memory with name: fold_0
+----- stdout -----
+Training on fold 0: test=宮城県, valid=山形県
+[Trial 0] Attempt 1/5
+----- stderr -----
+[W 2026-06-15 02:58:25,561] Trial 0 failed with parameters: {'lr': 0.0003574712922600243, 'weight_decay': 0.006351221010640704, 'batch_size': 32, 'dropout': 0.04679835610086079, 'base_channels': 32, 'm1_size': 4196, 'm2_size': 256} because of the following error: NameError("name 'train_prauc' is not defined").
+Traceback (most recent call last):
+  File "/home/hasegawakazuki/anaconda3/lib/python3.11/site-packages/optuna/study/_optimize.py", line 201, in _run_trial
+    value_or_values = func(trial)
+                      ^^^^^^^^^^^
+  File "/tmp/ipykernel_1249035/4016730923.py", line 152, in objective
+    train_auc_list.append(train_auc); valid_auc_list.append(valid_auc); test_auc_list.append(test_auc); train_prauc_list.append(train_prauc); valid_prauc_list.append(valid_prauc); test_prauc_list.append(test_prauc)
+                                                                                                                                ^^^^^^^^^^^
+NameError: name 'train_prauc' is not defined
+----- stderr -----
+[W 2026-06-15 02:58:25,565] Trial 0 failed with value None.
+------------------
+
+[0;31m---------------------------------------------------------------------------[0m
+[0;31mNameError[0m                                 Traceback (most recent call last)
+Cell [0;32mIn[12], line 268[0m
+[1;32m    261[0m [38;5;66;03m# ---- このfold用のStudyを作成・実行 ----[39;00m
+[1;32m    262[0m study [38;5;241m=[39m optuna[38;5;241m.[39mcreate_study(
+[1;32m    263[0m     study_name[38;5;241m=[39m[38;5;124mf[39m[38;5;124m"[39m[38;5;124mfold_[39m[38;5;132;01m{[39;00mn[38;5;132;01m}[39;00m[38;5;124m"[39m,
+[1;32m    264[0m     direction[38;5;241m=[39m[38;5;124m"[39m[38;5;124mmaximize[39m[38;5;124m"[39m,
+[1;32m    265[0m     sampler[38;5;241m=[39moptuna[38;5;241m.[39msamplers[38;5;241m.[39mTPESampler(seed[38;5;241m=[39mSEED),
+[1;32m    266[0m     pruner[38;5;241m=[39mMedianPruner(n_startup_trials[38;5;241m=[39m[38;5;241m5[39m, n_warmup_steps[38;5;241m=[39m[38;5;241m5[39m),
+[1;32m    267[0m )
+[0;32m--> 268[0m study[38;5;241m.[39moptimize(objective, n_trials[38;5;241m=[39m[38;5;241m5[39m, gc_after_trial[38;5;241m=[39m[38;5;28;01mTrue[39;00m, n_jobs[38;5;241m=[39m[38;5;241m1[39m)
+
+File [0;32m~/anaconda3/lib/python3.11/site-packages/optuna/study/study.py:490[0m, in [0;36mStudy.optimize[0;34m(self, func, n_trials, timeout, n_jobs, catch, callbacks, gc_after_trial, show_progress_bar)[0m
+[1;32m    388[0m [38;5;28;01mdef[39;00m [38;5;21moptimize[39m(
+[1;32m    389[0m     [38;5;28mself[39m,
+[1;32m    390[0m     func: ObjectiveFuncType,
+[0;32m   (...)[0m
+[1;32m    397[0m     show_progress_bar: [38;5;28mbool[39m [38;5;241m=[39m [38;5;28;01mFalse[39;00m,
+[1;32m    398[0m ) [38;5;241m-[39m[38;5;241m>[39m [38;5;28;01mNone[39;00m:
+[1;32m    399[0m [38;5;250m    [39m[38;5;124;03m"""Optimize an objective function.[39;00m
+[1;32m    400[0m 
+[1;32m    401[0m [38;5;124;03m    Optimization is done by choosing a suitable set of hyperparameter values from a given[39;00m
+[0;32m   (...)[0m
+[1;32m    488[0m [38;5;124;03m            If nested invocation of this method occurs.[39;00m
+[1;32m    489[0m [38;5;124;03m    """[39;00m
+[0;32m--> 490[0m     _optimize(
+[1;32m    491[0m         study[38;5;241m=[39m[38;5;28mself[39m,
+[1;32m    492[0m         func[38;5;241m=[39mfunc,
+[1;32m    493[0m         n_trials[38;5;241m=[39mn_trials,
+[1;32m    494[0m         timeout[38;5;241m=[39mtimeout,
+[1;32m    495[0m         n_jobs[38;5;241m=[39mn_jobs,
+[1;32m    496[0m         catch[38;5;241m=[39m[38;5;28mtuple[39m(catch) [38;5;28;01mif[39;00m [38;5;28misinstance[39m(catch, Iterable) [38;5;28;01melse[39;00m (catch,),
+[1;32m    497[0m         callbacks[38;5;241m=[39mcallbacks,
+[1;32m    498[0m         gc_after_trial[38;5;241m=[39mgc_after_trial,
+[1;32m    499[0m         show_progress_bar[38;5;241m=[39mshow_progress_bar,
+[1;32m    500[0m     )
+
+File [0;32m~/anaconda3/lib/python3.11/site-packages/optuna/study/_optimize.py:63[0m, in [0;36m_optimize[0;34m(study, func, n_trials, timeout, n_jobs, catch, callbacks, gc_after_trial, show_progress_bar)[0m
+[1;32m     61[0m [38;5;28;01mtry[39;00m:
+[1;32m     62[0m     [38;5;28;01mif[39;00m n_jobs [38;5;241m==[39m [38;5;241m1[39m:
+[0;32m---> 63[0m         _optimize_sequential(
+[1;32m     64[0m             study,
+[1;32m     65[0m             func,
+[1;32m     66[0m             n_trials,
+[1;32m     67[0m             timeout,
+[1;32m     68[0m             catch,
+[1;32m     69[0m             callbacks,
+[1;32m     70[0m             gc_after_trial,
+[1;32m     71[0m             reseed_sampler_rng[38;5;241m=[39m[38;5;28;01mFalse[39;00m,
+[1;32m     72[0m             time_start[38;5;241m=[39m[38;5;28;01mNone[39;00m,
+[1;32m     73[0m             progress_bar[38;5;241m=[39mprogress_bar,
+[1;32m     74[0m         )
+[1;32m     75[0m     [38;5;28;01melse[39;00m:
+[1;32m     76[0m         [38;5;28;01mif[39;00m n_jobs [38;5;241m==[39m [38;5;241m-[39m[38;5;241m1[39m:
+
+File [0;32m~/anaconda3/lib/python3.11/site-packages/optuna/study/_optimize.py:160[0m, in [0;36m_optimize_sequential[0;34m(study, func, n_trials, timeout, catch, callbacks, gc_after_trial, reseed_sampler_rng, time_start, progress_bar)[0m
+[1;32m    157[0m         [38;5;28;01mbreak[39;00m
+[1;32m    159[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 160[0m     frozen_trial_id [38;5;241m=[39m _run_trial(study, func, catch)
+[1;32m    161[0m [38;5;28;01mfinally[39;00m:
+[1;32m    162[0m     [38;5;66;03m# The following line mitigates memory problems that can be occurred in some[39;00m
+[1;32m    163[0m     [38;5;66;03m# environments (e.g., services that use computing containers such as GitHub Actions).[39;00m
+[1;32m    164[0m     [38;5;66;03m# Please refer to the following PR for further details:[39;00m
+[1;32m    165[0m     [38;5;66;03m# https://github.com/optuna/optuna/pull/325.[39;00m
+[1;32m    166[0m     [38;5;28;01mif[39;00m gc_after_trial:
+
+File [0;32m~/anaconda3/lib/python3.11/site-packages/optuna/study/_optimize.py:258[0m, in [0;36m_run_trial[0;34m(study, func, catch)[0m
+[1;32m    251[0m         [38;5;28;01massert[39;00m [38;5;28;01mFalse[39;00m, [38;5;124m"[39m[38;5;124mShould not reach.[39m[38;5;124m"[39m
+[1;32m    253[0m [38;5;28;01mif[39;00m (
+[1;32m    254[0m     updated_state [38;5;241m==[39m TrialState[38;5;241m.[39mFAIL
+[1;32m    255[0m     [38;5;129;01mand[39;00m func_err [38;5;129;01mis[39;00m [38;5;129;01mnot[39;00m [38;5;28;01mNone[39;00m
+[1;32m    256[0m     [38;5;129;01mand[39;00m [38;5;129;01mnot[39;00m [38;5;28misinstance[39m(func_err, catch)
+[1;32m    257[0m ):
+[0;32m--> 258[0m     [38;5;28;01mraise[39;00m func_err
+[1;32m    259[0m [38;5;28;01mreturn[39;00m trial[38;5;241m.[39m_trial_id
+
+File [0;32m~/anaconda3/lib/python3.11/site-packages/optuna/study/_optimize.py:201[0m, in [0;36m_run_trial[0;34m(study, func, catch)[0m
+[1;32m    199[0m [38;5;28;01mwith[39;00m get_heartbeat_thread(trial[38;5;241m.[39m_trial_id, study[38;5;241m.[39m_storage):
+[1;32m    200[0m     [38;5;28;01mtry[39;00m:
+[0;32m--> 201[0m         value_or_values [38;5;241m=[39m func(trial)
+[1;32m    202[0m     [38;5;28;01mexcept[39;00m exceptions[38;5;241m.[39mTrialPruned [38;5;28;01mas[39;00m e:
+[1;32m    203[0m         [38;5;66;03m# TODO(mamu): Handle multi-objective cases.[39;00m
+[1;32m    204[0m         state [38;5;241m=[39m TrialState[38;5;241m.[39mPRUNED
+
+Cell [0;32mIn[12], line 152[0m, in [0;36mobjective[0;34m(trial)[0m
+[1;32m    150[0m test_loss_list[38;5;241m.[39mappend(test_loss); test_acc_list[38;5;241m.[39mappend(test_acc);test_positive_list[38;5;241m.[39mappend(test_positive); test_F1_list[38;5;241m.[39mappend(test_F1)
+[1;32m    151[0m train_meanscore_list[38;5;241m.[39mappend(train_meanscore);valid_meanscore_list[38;5;241m.[39mappend(valid_meanscore);test_meanscore_list[38;5;241m.[39mappend(test_meanscore)
+[0;32m--> 152[0m train_auc_list[38;5;241m.[39mappend(train_auc); valid_auc_list[38;5;241m.[39mappend(valid_auc); test_auc_list[38;5;241m.[39mappend(test_auc); train_prauc_list[38;5;241m.[39mappend(train_prauc); valid_prauc_list[38;5;241m.[39mappend(valid_prauc); test_prauc_list[38;5;241m.[39mappend(test_prauc)
+[1;32m    154[0m [38;5;28;01mif[39;00m valid_auc [38;5;241m>[39m best_val_auc:
+[1;32m    155[0m     best_val_auc [38;5;241m=[39m valid_auc
+
+[0;31mNameError[0m: name 'train_prauc' is not defined
+
+==== launch 2026-06-15 12:47:00 host=mole CUDA_VISIBLE_DEVICES=1 nb=実験3-宮城県-ResCNN_LGBM.ipynb ====
+[NbConvertApp] Converting notebook 実験3-宮城県-ResCNN_LGBM.ipynb to notebook
+0.00s - Debugger warning: It seems that frozen modules are being used, which may
+0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off
+0.00s - to python to disable frozen modules.
+0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.

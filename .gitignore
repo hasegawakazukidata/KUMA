@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.env
+.venv/
+venv/
+.DS_Store
+
+# Large datasets
+dataset/*
+!dataset/README.md
+
+# Trained models / generated model artifacts
+optuna_models/*
+!optuna_models/README.md
+
+# Reference environment model artifacts
+（参考）実験２の環境/optuna_models/*
+!（参考）実験２の環境/optuna_models/README.md
+
+# Common large ML / GIS artifacts
+*.pt
+*.pth
+*.pkl
+*.joblib
+*.ckpt
+*.tif
+*.tiff
+*.geojson

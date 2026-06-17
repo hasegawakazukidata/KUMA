@@ -1,0 +1,22 @@
+# pip 用 依存パッケージ（実験3：全モデル全県実行環境）
+# 導入: pip install -r requirements.txt
+#
+# 動作確認環境: Python 3.11.7 / Linux
+# 注意: torch は GPU(CUDA) 版を使う場合、環境に合わせて公式の案内に従い別途インストール
+# pip install torch==2.5.1 --index-url https://download.pytorch.org/whl/cu124
+# 下記の torch==2.5.1 は CPU 版/環境依存のため、必要に応じて読み替えてください。
+
+numpy==2.2.6
+pandas==3.0.1
+scikit-learn==1.7.2
+torch==2.5.1
+optuna==4.5.0
+lightgbm==4.6.0
+geopandas==1.1.1
+rasterio==1.4.3
+shapely==2.1.2
+affine==2.4.0
+tifffile==2023.4.12
+pillow==12.1.1
+joblib==1.5.2
+matplotlib==3.10.5

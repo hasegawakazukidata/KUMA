@@ -1,0 +1,7 @@
+==== launch 2026-06-15 01:55:54 host=nue CUDA_VISIBLE_DEVICES=unset nb=ベースライン実験３DT.ipynb ====
+[NbConvertApp] Converting notebook ベースライン実験３DT.ipynb to notebook
+0.00s - Debugger warning: It seems that frozen modules are being used, which may
+0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off
+0.00s - to python to disable frozen modules.
+0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.
+[NbConvertApp] Writing 53690 bytes to _executed/ベースライン実験３DT_executed.ipynb
